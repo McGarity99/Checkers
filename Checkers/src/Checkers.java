@@ -17,12 +17,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
-import java.util.Random;
-import java.lang.Runnable;
-import javafx.application.Platform;
-
 import java.util.Arrays;
-import java.util.Optional;
 import javafx.application.Application;
 
 public class Checkers extends Application {
