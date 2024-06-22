@@ -18,6 +18,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import java.util.Arrays;
+import java.util.Optional;
+
 import javafx.application.Application;
 
 public class Checkers extends Application {
@@ -31,32 +33,30 @@ public class Checkers extends Application {
 	Button infoButton; // button to display additional info
     VBox root;			// root of the UI
 	Alert infoBox;		// information box (author, version, etc.)
+	Alert victoryAlert; // notify the winning player that they've won
+	Alert playAgainAlert; // ask the players if they want to play again
     
     boolean aiEnabled = false;
     
-    Image redSpaceBlank = new Image("file:resources/redSpace.jpg");
-    Image blackSpaceBlank = new Image("file:resources/blackSpace.jpg");
-    Image whitePiece = new Image("file:resources/whitePiece.jpg");
-    Image whitePieceSelected = new Image("file:resources/whitePieceSelected.jpg");
-    Image redPiece = new Image("file:resources/redPiece.jpg");
-    Image redPieceSelected = new Image("file:resources/redPieceSelected.jpg");
-    Image whiteKing = new Image("file:resources/whiteDawg.jpg");
-    Image whiteKingSelected = new Image("file:resources/whiteDawgSelected.jpg");
-    Image redKing = new Image("file:resources/redDawg.jpg");
-    Image redKingSelected = new Image("file:resources/redDawgSelected.jpg");
-    Image checkersLogo = new Image("file:resources/UGA Face.jpg");
+    Image redSpaceBlank = new Image("resources/redSpace.jpg");
+    Image blackSpaceBlank = new Image("resources/blackSpace.jpg");
+    Image whitePiece = new Image("resources/whitePiece.jpg");
+    Image whitePieceSelected = new Image("resources/whitePieceSelected.jpg");
+    Image redPiece = new Image("resources/redPiece.jpg");
+    Image redPieceSelected = new Image("resources/redPieceSelected.jpg");
+    Image whiteKing = new Image("resources/whiteDawg.jpg");
+    Image whiteKingSelected = new Image("resources/whiteDawgSelected.jpg");
+    Image redKing = new Image("resources/redDawg.jpg");
+    Image redKingSelected = new Image("resources/redDawgSelected.jpg");
+    Image checkersLogo = new Image("resources/UGA Face.jpg");
     ButtonType exitDialog = new ButtonType("EXIT");
-    
-    Alert redWin = new Alert(AlertType.INFORMATION, "Red Player Wins!", exitDialog);
-    Alert whiteWin = new Alert(AlertType.INFORMATION, "White Player Wins!", exitDialog);
-    Alert redWhiteDraw = new Alert(AlertType.INFORMATION, "It's a DRAW!", exitDialog);
     
     GridPane mainPane = new GridPane();
     
-    int redCount = 12;
-    int whiteCount = 12;
-	int jumpedRow = -1;
-	int jumpedCol = -1;
+    int redCount;
+    int whiteCount;
+	int jumpedRow;
+	int jumpedCol;
 
 	boolean game_over = false;
     
@@ -75,8 +75,8 @@ public class Checkers extends Application {
     ImageView whiteKingExample = new ImageView(whiteKing);
     ImageView theLogo = new ImageView(checkersLogo);
     
-    int selectedRow = -1; // row of selected piece (to move)
-    int selectedCol = -1; // col of selected piece (to move)
+    int selectedRow; // row of selected piece (to move)
+    int selectedCol; // col of selected piece (to move)
     
     int targetRow; // row of target space (to move to)
     int targetCol; // col of target space (to move to)
@@ -94,7 +94,8 @@ public class Checkers extends Application {
 	
 	@Override
 	public void start(Stage stage) {
-		setupOther();
+		reset();
+		/* setupOther();
 		//Optional<ButtonType> r = aiQuery.showAndWait(); // return to this later
 		//if (r.toString().equals("Optional[ButtonType [text=Yes, buttonData=OTHER]]")) {
 	    //	   aiEnabled = true;
@@ -115,6 +116,7 @@ public class Checkers extends Application {
 				blackTempView.setFitHeight(80.0);
 				blackTempView.setOnMouseClicked(event -> {
 					imageEventHandler(blackTempView);
+					checkForEnd();
 				});
 				
 				// if-else to determine placement of red/black squares on the board
@@ -144,7 +146,7 @@ public class Checkers extends Application {
 			} // inner for
 		} // outer for
 		root.getChildren().addAll(topMenu, mainPane, turnTracker);
-		setupScene();
+		setupScene(); */
 	}
 	
 	/*
@@ -161,25 +163,25 @@ public class Checkers extends Application {
 	 */
 	
 	public void imageEventHandler(ImageView iv) {
-		System.out.println("entering event handler");
+		//System.out.println("entering event handler");
 		if (selectedRow == -1 && selectedCol == -1 && colorMatches(iv) && !isSelected(iv)) { // if selecting piece to move
-			System.out.println("selecting first coordinates");
+			//System.out.println("selecting first coordinates");
 			selectedRow = GridPane.getRowIndex(iv);
 			selectedCol = GridPane.getColumnIndex(iv);
 			setSelectedImage(selectedRow, selectedCol, false);
 			
 		} else if ((selectedRow != -1 && selectedCol != -1) && (hasImage(iv) && !isSelected(iv) && colorMatches(iv))) { // if changing selection to move
-			System.out.println("re-selecting first coordinates");
+			//System.out.println("re-selecting first coordinates");
 			setSelectedImage(selectedRow, selectedCol, true); // reset previous selection's Image
 			selectedRow = GridPane.getRowIndex(iv);
 			selectedCol = GridPane.getColumnIndex(iv);
 			setSelectedImage(selectedRow, selectedCol, false); // select the new space
 			
 		} else if ((selectedRow != -1 && selectedCol != -1)) { // if selecting destination space
-			System.out.println("selecting destination space");
+			//System.out.println("selecting destination space");
 			if (hasImage(imageGrid[selectedRow][selectedCol])) {
-				System.out.println("selected space is blank");
-				System.out.println("Initial: " + selectedRow + ", " + selectedCol);
+				//System.out.println("selected space is blank");
+				//System.out.println("Initial: " + selectedRow + ", " + selectedCol);
 				targetRow = GridPane.getRowIndex(iv);
 				targetCol = GridPane.getColumnIndex(iv);
 				boolean jumping = isJumpingMove(selectedRow, selectedCol, targetRow, targetCol);
@@ -202,7 +204,7 @@ public class Checkers extends Application {
 						jumpedRow = -1;
 						jumpedCol = -1;
 					}
-				} else System.out.println("Destination was not blank or is invalid move");
+				} //else //System.out.println("Destination was not blank or is invalid move");
 			}
 		}
 	}
@@ -245,27 +247,27 @@ public class Checkers extends Application {
 	 * If a piece has already been selected, then reset the image of the previously-selected piece.
 	 */
 	public void setSelectedImage(int row, int col, boolean resetting) {
-		System.out.println("setSelectedImage row: " + row);
-		System.out.println("col: " + col);
-		System.out.println("resetting: " + resetting);
+		//System.out.println("setSelectedImage row: " + row);
+		//System.out.println("col: " + col);
+		//System.out.println("resetting: " + resetting);
 		Image image_type = imageGrid[row][col].getImage();
 		if (image_type == whitePiece || image_type == whitePieceSelected) {
-			System.out.println("white piece select");
+			//System.out.println("white piece select");
 			if (image_type == whitePieceSelected && resetting) {
 				imageGrid[row][col].setImage(whitePiece);
 			} else imageGrid[row][col].setImage(whitePieceSelected);
 		} else if (image_type == whiteKing || image_type == whiteKingSelected) {
-			System.out.println("white king select");
+			//System.out.println("white king select");
 			if (image_type == whiteKingSelected && resetting) {
 				imageGrid[row][col].setImage(whiteKing);
 			} else imageGrid[row][col].setImage(whiteKingSelected);
 		} else if (image_type == redPiece || image_type == redPieceSelected) {
-			System.out.println("red piece select");
+			//System.out.println("red piece select");
 			if (image_type == redPieceSelected && resetting) {
 				imageGrid[row][col].setImage(redPiece);
 			} else imageGrid[row][col].setImage(redPieceSelected);
 		} else {
-			System.out.println("red king select");
+			//System.out.println("red king select");
 			if (image_type == redKingSelected && resetting) {
 				imageGrid[row][col].setImage(redKing);
 			} else imageGrid[row][col].setImage(redKingSelected);
@@ -356,7 +358,7 @@ public class Checkers extends Application {
 	 * does nothing.
 	 */
 	public void initializeCoordinates(int row, int col) {
-		//System.out.println("initializing with row: " + row + " | col:" + col);
+		////System.out.println("initializing with row: " + row + " | col:" + col);
 		int[] validColsEven = {1, 3, 5, 7};
 		int[] validColsOdd = {0, 2, 4, 6};
 		if ((row % 2 == 0) && row < 3) { // even row, white
@@ -577,7 +579,7 @@ public class Checkers extends Application {
 			break;
 			case 1:
 				// check space at origRow - 1, origCol - 1
-				other_color = !colorMatches(imageGrid[origRow - 1][origCol + 1]);
+				other_color = !colorMatches(imageGrid[origRow - 1][origCol - 1]);
 				if (other_color) {
 					jumpedRow = origRow - 1;
 					jumpedCol = origCol - 1;
@@ -628,6 +630,87 @@ public class Checkers extends Application {
 		if (redCount == 0 || whiteCount == 0) {
 			game_over = true;
 		}
+	}
+
+	private void checkForEnd() {
+		if (!game_over) {
+			return;
+		}
+
+		if (redCount == 0) {
+			victoryAlert = new Alert(AlertType.INFORMATION, "White Player Wins!", new ButtonType("OK"));
+		} else {
+			victoryAlert = new Alert(AlertType.INFORMATION, "Red Player Wins!", new ButtonType("OK"));
+		}
+		victoryAlert.showAndWait();
+		playAgainAlert = new Alert(AlertType.CONFIRMATION, "Would You Like to Play Again?", new ButtonType("Yes"), new ButtonType("No"));
+		Optional<ButtonType> resp = playAgainAlert.showAndWait();playAgainAlert.showAndWait();
+
+		if (resp.toString().equals("Optional[ButtonType [text=Yes, buttonData=OTHER]]")) {
+			reset();
+		} //if user clicked to enable the AI
+	}
+
+	private void reset() {
+		redCount = 12;
+		whiteCount = 12;
+		jumpedRow = -1;
+		jumpedCol = -1;
+		game_over = false;
+		selectedRow = -1;
+		selectedCol = -1;
+		setupOther();
+		//Optional<ButtonType> r = aiQuery.showAndWait(); // return to this later
+		//if (r.toString().equals("Optional[ButtonType [text=Yes, buttonData=OTHER]]")) {
+	    //	   aiEnabled = true;
+	    //} else aiEnabled = false;
+		for (row = 0; row < 8; row++) {
+			for (col = 0; col < 8; col++) {
+				// need to re-initialize these on each iteration to avoid duplicate child nodes
+				ImageView redTempView = new ImageView(redSpaceBlank);
+				redTempView.setPreserveRatio(true);
+				redTempView.setFitWidth(80.0);
+				redTempView.setFitHeight(80.0);
+				redTempView.setOnMouseClicked(event -> {
+					// leave blank for now (only playing on black squares)
+				});
+				ImageView blackTempView = new ImageView(blackSpaceBlank);
+				blackTempView.setPreserveRatio(true);
+				blackTempView.setFitWidth(80.0);
+				blackTempView.setFitHeight(80.0);
+				blackTempView.setOnMouseClicked(event -> {
+					imageEventHandler(blackTempView);
+					checkForEnd();
+				});
+				
+				// if-else to determine placement of red/black squares on the board
+				if (row % 2 == 0) { // if filling in an "even" row (fill blacks on odd indices)
+					switch(col % 2) {
+					case 0:
+						imageGrid[row][col] = redTempView;
+						mainPane.add(redTempView, col, row);
+						break;
+					default:
+						imageGrid[row][col] = blackTempView;
+						mainPane.add(blackTempView, col, row);
+					}
+					initializeCoordinates(row, col);
+				} else { // if filling in an "odd" row (fill blacks on even indices)
+					switch(col % 2) {
+					case 0:
+						imageGrid[row][col] = blackTempView;
+						mainPane.add(blackTempView, col, row);
+						break;
+					default:
+						imageGrid[row][col] = redTempView;
+						mainPane.add(redTempView, col, row);
+					}
+					initializeCoordinates(row, col);
+				}
+			} // inner for
+		} // outer for
+		root.getChildren().addAll(topMenu, mainPane, turnTracker);
+		setupScene();
 	}
 
 	public static void main(String[] args) {
